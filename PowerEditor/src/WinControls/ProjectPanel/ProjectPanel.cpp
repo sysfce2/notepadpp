@@ -77,8 +77,9 @@ intptr_t CALLBACK ProjectPanel::run_dlgProc(UINT message, WPARAM wParam, LPARAM 
 			SendMessage(_hToolbarMenu, TB_AUTOSIZE, 0, 0); 
 			ShowWindow(_hToolbarMenu, SW_SHOW);
 
+			std::vector<int> imgIds{ IDI_PROJECT_WORKSPACE, IDI_PROJECT_WORKSPACEDIRTY, IDI_PROJECT_PROJECT, IDI_PROJECT_FOLDEROPEN, IDI_PROJECT_FOLDERCLOSE, IDI_PROJECT_FILE, IDI_PROJECT_FILEINVALID };
 			_treeView.init(_hInst, _hSelf, ID_PROJECTTREEVIEW);
-			_treeView.setImageList(CX_BITMAP, CY_BITMAP, 7, IDI_PROJECT_WORKSPACE, IDI_PROJECT_WORKSPACEDIRTY, IDI_PROJECT_PROJECT, IDI_PROJECT_FOLDEROPEN, IDI_PROJECT_FOLDERCLOSE, IDI_PROJECT_FILE, IDI_PROJECT_FILEINVALID);
+			_treeView.setImageList(imgIds);
 
 			_treeView.addCanNotDropInList(INDEX_LEAF);
 			_treeView.addCanNotDropInList(INDEX_LEAF_INVALID);
@@ -454,7 +455,7 @@ void ProjectPanel::buildProjectXml(TiXmlNode *node, HTREEITEM hItem, const wchar
 		SendMessage(_treeView.getHSelf(), TVM_GETITEM, 0, reinterpret_cast<LPARAM>(&tvItem));
 		if (tvItem.lParam)
 		{
-			wstring *fn = (wstring *)tvItem.lParam;
+			const wstring *fn = reinterpret_cast<const wstring *>(tvItem.lParam);
 			wstring newFn = getRelativePath(*fn, fn2write);
 			TiXmlNode *fileLeaf = node->InsertEndChild(TiXmlElement(L"File"));
 			fileLeaf->ToElement()->SetAttribute(L"name", newFn.c_str());
@@ -1214,9 +1215,10 @@ bool ProjectPanel::saveWorkSpaceAs(bool saveCopyAs)
 void ProjectPanel::setFileExtFilter(CustomFileDialog & fDlg)
 {
 	const wchar_t *ext = NppParameters::getInstance().getNppGUI()._definedWorkspaceExt.c_str();
-	wstring workspaceExt = L"";
 	if (*ext != '\0')
 	{
+		wstring workspaceExt = L"";
+
 		if (*ext != '.')
 			workspaceExt += L".";
 		workspaceExt += ext;
